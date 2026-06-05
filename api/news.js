@@ -1,4 +1,4 @@
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const { q = 'ALL', language = 'hi', page = 1, pageSize = 24 } = req.query;
+  const { q = 'ALL', language = 'hi', page = '1', pageSize = '24' } = req.query || {};
   const apiKey = '6ebd28bfe2cf43818b8d10da03af90a3';
   const apiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&pageSize=${pageSize}&page=${page}&language=${language}&sortBy=publishedAt&apiKey=${apiKey}`;
 
@@ -24,4 +24,4 @@ module.exports = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message, status: "error" });
   }
-};
+}
