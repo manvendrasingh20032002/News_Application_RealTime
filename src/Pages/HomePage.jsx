@@ -7,58 +7,25 @@ export default function HomePage() {
   let [page, setPage] = useState(1)
   let [articles, setArticles] = useState([])
   let [totalResults, setTotalResults] = useState(0)
-  let [allArticles, setAllArticles] = useState([])
   let [q, setQ] = useState("")
   let [language, setLanguage] = useState("")
   let [searchParams] = useSearchParams()
 
-  async function getAPIData(q, langauge) {
-    const query = q || "ALL";
-    let category = "general";
-    let filterText = "";
-    
-    const lowerQuery = query.toLowerCase().trim();
-    if (lowerQuery === "politics" || lowerQuery === "crime" || lowerQuery === "education" || lowerQuery === "world" || lowerQuery === "india" || lowerQuery === "jokes" || lowerQuery === "all" || lowerQuery === "") {
-      category = "general";
-    } else if (lowerQuery === "science") {
-      category = "science";
-    } else if (lowerQuery === "technologys" || lowerQuery === "technology") {
-      category = "technology";
-    } else if (lowerQuery === "sports") {
-      category = "sports";
-    } else if (lowerQuery === "entertainment") {
-      category = "entertainment";
-    } else if (lowerQuery === "economics" || lowerQuery === "business") {
-      category = "business";
-    } else {
-      category = "general";
-      filterText = lowerQuery;
-    }
+  const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
-    let country = "us";
-    if (langauge === "hi") country = "in";
-    else if (langauge === "en") country = "us";
-    else if (langauge === "fr") country = "fr";
-    else if (langauge === "es") country = "us";
-    else if (langauge === "de") country = "us";
+  async function getAPIData(q, langauge) {
+    setPage(1)
+    const apiKey = "6ebd28bfe2cf43818b8d10da03af90a3";
+    const url = isLocalhost
+      ? `https://newsapi.org/v2/everything?q=${q}&pageSize=24&language=${langauge}&sortBy=publishedAt&apiKey=${apiKey}`
+      : `/api/news?q=${encodeURIComponent(q)}&pageSize=24&language=${langauge}`;
 
     try {
-      let response = await fetch(`https://saurav.tech/NewsAPI/top-headlines/category/${category}/${country}.json`)
+      let response = await fetch(url)
       let data = await response.json()
-      if (data && data.articles) {
-        let fetchedArticles = data.articles.filter(article => article.title && article.url);
-
-        if (filterText) {
-          fetchedArticles = fetchedArticles.filter(article => 
-            (article.title && article.title.toLowerCase().includes(filterText)) ||
-            (article.description && article.description.toLowerCase().includes(filterText))
-          );
-        }
-
-        setAllArticles(fetchedArticles)
-        setTotalResults(fetchedArticles.length)
-        setArticles(fetchedArticles.slice(0, 24))
-        setPage(1)
+      if (data && data.status === "ok") {
+        setArticles(data.articles || [])
+        setTotalResults(data.totalResults || 0)
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -68,10 +35,20 @@ export default function HomePage() {
   async function fetchData() {
     const nextPage = page + 1;
     setPage(nextPage);
-    const startIndex = (nextPage - 1) * 24;
-    const endIndex = startIndex + 24;
-    const nextArticles = allArticles.slice(startIndex, endIndex);
-    setArticles(articles.concat(nextArticles));
+    const apiKey = "6ebd28bfe2cf43818b8d10da03af90a3";
+    const url = isLocalhost
+      ? `https://newsapi.org/v2/everything?q=${q}&pageSize=24&page=${nextPage}&language=${language}&sortBy=publishedAt&apiKey=${apiKey}`
+      : `/api/news?q=${encodeURIComponent(q)}&pageSize=24&page=${nextPage}&language=${language}`;
+
+    try {
+      let response = await fetch(url)
+      let data = await response.json()
+      if (data && data.status === "ok") {
+        setArticles(articles.concat(data.articles || []))
+      }
+    } catch (error) {
+      console.error("Error fetching more data:", error);
+    }
   }
 
   useEffect(() => {
